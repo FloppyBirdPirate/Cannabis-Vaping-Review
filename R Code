@@ -1,0 +1,124 @@
+# Cannabis vaping correlate review
+# Chung et al
+#########################################################
+
+
+# Load library
+library(metafor)
+
+# Read in dataset
+test <- read.csv("C:/Users/File_Name.csv", header = TRUE, sep = ",")
+
+# Convert to log odds and corresponding variance
+dat2 <- escalc(measure="OR", ai=a, bi=b, ci=c, di=d, data = test)
+
+# Transform into log odds
+dat2$yi <- log(dat2$R_AdjOR)
+
+# Convert p-values into z-values
+dat2$zi <- sign(dat2$yi) * qnorm(dat2$R_PValue_Adjusted/2, lower.tail = FALSE)
+
+# Convert into variance
+dat2$sei <- dat2$yi / dat2$zi
+
+# Convert CI into SE
+dat2$sei <- (log(dat2$R_AdjUpperCI1) - log(dat2$R_AdjLowerCI1)) / (2 * 1.96)
+
+# Replace missing values with variance
+dat2$vi <- dat2$sei^2
+
+# Fit the meta-analysis model
+res2 <- rma(yi, vi, slab = paste(dat2$ï..Author_year), data = dat2)
+
+# Default forest plot
+forest(res2, atransf = exp)
+
+# Customize forest plot
+forest(res2, atransf = exp, xlab = "Adjusted Odds Ratio", cex = 0.6, xlim = c(-10, 10), mlab = "", at = log(c(0.01, 1, 5, 10)), psize = 1.4, order = order(res2$yi))
+text(-10, nrow(test) + 1.5, cex = 0.6, "Study", pos = 4)
+text(10, nrow(test) + 1.5, cex = 0.6, "Adjusted Odds Ratio [95% CI]", pos = 2)
+text(-10, -1, pos = 4, cex = 0.6, bquote(paste("Heterogeneity (Q = ", .(formatC(res2$QE, digits = 2, format = "f")), ", df = ", .(res2$k - res2$p), ", p = ", .(formatC(res2$QEp, digits = 2, format = "f")), "; ", I^2, " = ", .(formatC(res2$I2, digits = 1, format = "f")), "%)")))
+
+# Funnel plot
+funnel(res2, atransf = exp)
+
+# Summary
+summary(res2, atransf = exp)
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Multi-level meta-analysis
+
+# Load library
+library(metafor)
+
+# Read in dataset
+test <- read.csv("C:/Users/lenovo/Dropbox/My PC (DESKTOP-S8NT706)/Desktop/01 Cannabis Vaping/2024 Drafts/Meta-analysis/Gender/All-Race-Black.csv", header = TRUE, sep = ",")
+
+# Convert to log odds and corresponding variance
+dat2 <- escalc(measure="OR", ai=a, bi=b, ci=c, di=d, data = test)
+
+# Transform into log odds
+dat2$yi <- log(dat2$R_AdjOR)
+
+# Convert p-values into z-values
+dat2$zi <- sign(dat2$yi) * qnorm(dat2$R_PValue_Adjusted/2, lower.tail = FALSE)
+
+# Convert into variance
+dat2$sei <- dat2$yi / dat2$zi
+
+# Convert CI into SE
+dat2$sei <- (log(dat2$R_AdjUpperCI1) - log(dat2$R_AdjLowerCI1)) / (2 * 1.96)
+
+# Replace missing values with variance
+dat2$vi <- dat2$sei^2
+
+# Fit the multilevel meta-analysis model
+res2 <- rma.mv(yi, vi, random = ~ 1 | Author_year, data = dat2)
+
+# Default forest plot
+forest(res2, atransf = exp)
+
+# Customize forest plot
+forest(res2, atransf = exp, xlab = "Adjusted Odds Ratio", cex = 0.6, xlim = c(-10, 10), mlab = "", at = log(c(0.01, 1, 5, 10)), psize = 1.4, order = order(res2$yi))
+text(-10, nrow(test) + 1.5, cex = 0.6, "Study", pos = 4)
+text(10, nrow(test) + 1.5, cex = 0.6, "Adjusted Odds Ratio [95% CI]", pos = 2)
+text(-10, -1, pos = 4, cex = 0.6, bquote(paste("Heterogeneity (Q = ", .(formatC(res2$QE, digits = 2, format = "f")), ", df = ", .(res2$k - res2$p), ", p = ", .(formatC(res2$QEp, digits = 2, format = "f")), "; ", I^2, " = ", .(formatC(res2$I2, digits = 1, format = "f")), "%)")))
+
+# Funnel plot
+funnel(res2, atransf = exp)
+
+# Summary
+summary(res2, atransf = exp)
+
+# Extract tau-square and I-square
+tau_sq <- res2$tau2[1]  # Extracting tau-square
+I_sq <- 100 * (tau_sq / (tau_sq + res2$sigma2))  # Calculating I-square as a percentage
+
+# Display tau-square and I-square
+cat("Tau-square:", tau_sq, "\n")
+cat("I-square:", round(I_sq, 1), "%\n")
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Test of publication bias 
+### Trim and fill method
+
+### carry out trim-and-fill analysis
+taf <- trimfill(res2)
+
+### draw funnel plot with missing studies filled in
+funnel(taf, atransf = exp, legend=list(show="cis"))
+
+# Summary
+summary(taf, atransf = exp)
+
+# Customize forest plot
+forest(taf, atransf = exp, xlab = "Adjusted Odds Ratio", cex = 0.6, xlim = c(-10, 10), mlab = "", at = log(c(0.01, 1, 5, 10)), psize = 1.4, order = order(taf$yi))
+text(-10, nrow(test) + 3.5, cex = 0.6, "Study", pos = 4)
+text(10, nrow(test) + 3.5, cex = 0.6, "Adjusted Odds Ratio [95% CI]", pos = 2)
+text(-10, -1, pos = 4, cex = 0.6, bquote(paste("Heterogeneity (Q = ", .(formatC(taf$QE, digits = 2, format = "f")), ", df = ", .(taf$k - taf$p), ", p = ", .(formatC(taf$QEp, digits = 2, format = "f")), "; ", I^2, " = ", .(formatC(taf$I2, digits = 1, format = "f")), "%)")))
+
+
+
+
